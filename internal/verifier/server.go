@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const NONCE_VALIDITY = 5 // lifetime for a nonce (in seconds) before it's invalidated
+const NONCE_VALIDITY = 60 // lifetime for a nonce (in seconds) before it's invalidated
 
 type nonceEntry struct {
 	Value     string
