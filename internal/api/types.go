@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -56,27 +57,29 @@ func (j *Jwt) Encode() string {
 }
 
 // Decodes a base64 decoded string into a JWT object
-func (j *Jwt) Decode(s string) {
+func (j *Jwt) Decode(s string) error {
 	// The supplied string should be two separate Base64 URLEncoded strings, delimited by a .
 	parts := strings.SplitN(s, ".", 2)
 
 	// Decode & unmarshal the hwt header
 	bHeader, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not decode Base64 JWT header: %v", err)
 	}
 	err = json.Unmarshal(bHeader, &j.Header)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not unmarshal JWT header: %v", err)
 	}
 
 	// Decode & unmarshal the jwt payload
 	bPayload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not decode Base64 JWT payload: %v", err)
 	}
 	err = json.Unmarshal(bPayload, &j.Payload)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("could not unmarshal JWT payload: %v", err)
 	}
+
+	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -67,6 +69,24 @@ func (s *Server) handleNonce(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
+	// Read the JWT payload from the body
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Bad Request, malformed or empty POST body: %v", err)}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+
+	jwt := api.Jwt{}
+	err = jwt.Decode(string(body))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Bad Request, malformed or empty POST body: %v", err)}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}
+
 	resp := api.AttestResponse{OK: true, Message: "alright, alright, alright"}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
