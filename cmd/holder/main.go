@@ -8,12 +8,16 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
 	"github.com/beardedprincess/you-jwt-this/internal/crypto"
 )
+
+const VERIFY_HOST = "127.0.0.1:8080"
 
 func main() {
 	// Generate a keypair used to sign payload
@@ -26,6 +30,10 @@ func main() {
 	}
 
 	// TODO:  Figure out how to get the nonce from the serveer
+	nonce, err := getNonce(fmt.Sprintf("http://%s/nonce", VERIFY_HOST))
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Construct the payload
 	var jwt api.Jwt = api.Jwt{
@@ -34,7 +42,7 @@ func main() {
 			Algorithm: "EdDSA",
 		},
 		Payload: api.Payload{
-			Nonce:    api.NonceResponse{ID: "id10t", Value: "Fooish"},
+			Nonce:    *nonce,
 			Subject:  "Lorem Ipsum",
 			Jwk:      crypto.GetJWK(pub),
 			Audience: "https://you-jwt-this.beardedprincess.com",
@@ -44,4 +52,19 @@ func main() {
 	sig := base64.RawURLEncoding.EncodeToString(crypto.Sign(priv, []byte(jwt.Encode())))
 
 	fmt.Printf("\n---------- BEGIN JWT ---------\n%s.%s\n---------- END JWT ---------\n", string(jwt.Encode()), string(sig))
+}
+
+func getNonce(url string) (*api.NonceResponse, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var retNonce api.NonceResponse
+	if err := json.NewDecoder(resp.Body).Decode(&retNonce); err != nil {
+		return nil, err
+	}
+
+	return &retNonce, nil
 }

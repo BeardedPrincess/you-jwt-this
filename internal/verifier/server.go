@@ -41,7 +41,7 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) handleNonce(w http.ResponseWriter, r *http.Request) {
-	resp := api.NonceResponse{ID: "foo", Value: "bar"}
+	resp := api.NonceResponse{ID: "foasdfadfadsfafo", Value: "bar"}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
 }
