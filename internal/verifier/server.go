@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -124,9 +125,41 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO:  Validate nonce
+	// Lookup the nonce supplied in the JWT, and compare it to the list of nonce's stored
+	//. if they do not match, this should not be trusted
+	err = s.validateNonce(jwt.Payload.Nonce.ID, jwt.Payload.Nonce.Value)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		resp := api.AttestResponse{OK: false, Message: err.Error()}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+		return
+	}
 
 	resp := api.AttestResponse{OK: true, Message: jwt.ToString()}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (s *Server) validateNonce(id string, value string) error {
+	n, ok := s.nonces[id]
+	if !ok {
+		return errors.New("unknown nonce")
+	}
+
+	if n.Used {
+		return errors.New("nonce already used")
+	}
+
+	if time.Now().After(n.ExpiresAt) {
+		return errors.New("nonce expired")
+	}
+
+	if n.Value != value {
+		return errors.New("nonce mismatch")
+	}
+
+	n.Used = true
+	s.nonces[id] = n
+	return nil
 }
