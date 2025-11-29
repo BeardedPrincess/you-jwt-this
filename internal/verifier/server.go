@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
@@ -71,6 +72,7 @@ func (s *Server) handleNonce(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 	// Read the JWT payload from the body
 	body, err := io.ReadAll(r.Body)
+	fmt.Println("Got: " + string(body))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Bad Request, malformed or empty POST body: %v", err)}
@@ -78,16 +80,25 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 		_ = json.NewEncoder(w).Encode(resp)
 	}
 
+	// Separate the JWT Header & Payload from the Signature
+	parts := strings.SplitN(string(body), ".", 3)
+	encJwt := parts[0] + "." + parts[1]
+	encSig := parts[2]
+	_ = encSig
+
+	// TODO: Validate the JWT using the signature
+
+	// Decode the JWT, and return it in JSON response (body)
 	jwt := api.Jwt{}
-	err = jwt.Decode(string(body))
+	err = jwt.Decode(string(encJwt))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Bad Request, malformed or empty POST body: %v", err)}
+		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Unable to Base64 Decode JWT Token: %v", err)}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
 	}
 
-	resp := api.AttestResponse{OK: true, Message: "alright, alright, alright"}
+	resp := api.AttestResponse{OK: true, Message: jwt.ToString()}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
 }

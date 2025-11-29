@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
 	"github.com/beardedprincess/you-jwt-this/internal/crypto"
@@ -49,9 +50,28 @@ func main() {
 		},
 	}
 
-	sig := base64.RawURLEncoding.EncodeToString(crypto.Sign(priv, []byte(jwt.Encode())))
+	// Get the URL Encoded JWT
+	encJwt := jwt.Encode()
 
-	fmt.Printf("\n---------- BEGIN JWT ---------\n%s.%s\n---------- END JWT ---------\n", string(jwt.Encode()), string(sig))
+	// Calculate the signature for the JWT
+	sig := base64.RawURLEncoding.EncodeToString(crypto.Sign(priv, []byte(encJwt)))
+
+	// The full HEADER.PAYLOAD.SIGNATURE version of the JWT token, properly encoded (use JWT.io to verify works)
+	strJwt := fmt.Sprintf("%s.%s", string(jwt.Encode()), string(sig))
+
+	resp, err := checkVerify(fmt.Sprintf("http://%s/verify", VERIFY_HOST), strJwt)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Marshal the response into pretty json for printing purposes
+	bResp, err := json.Marshal(resp)
+	if err != nil {
+		log.Fatal(err)
+	}
+	strResp := string(bResp)
+
+	fmt.Printf("Response for Verifier: \n%v\n", strResp)
 }
 
 func getNonce(url string) (*api.NonceResponse, error) {
@@ -67,4 +87,22 @@ func getNonce(url string) (*api.NonceResponse, error) {
 	}
 
 	return &retNonce, nil
+}
+
+// Sends jwt to url and returns an api.AttestResponse where api.AttestResponse.OK == true if accepted.
+func checkVerify(url string, jwt string) (*api.AttestResponse, error) {
+	reader := strings.NewReader(jwt)
+
+	resp, err := http.Post(url, "application/text", reader)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var retResp api.AttestResponse
+	if err := json.NewDecoder(resp.Body).Decode(&retResp); err != nil {
+		return nil, err
+	}
+
+	return &retResp, nil
 }

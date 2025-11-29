@@ -83,3 +83,14 @@ func (j *Jwt) Decode(s string) error {
 
 	return nil
 }
+
+// Returns JWT object as JSON string
+func (j *Jwt) ToString() string {
+	b, err := json.Marshal(j)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return string(b)
+
+}
