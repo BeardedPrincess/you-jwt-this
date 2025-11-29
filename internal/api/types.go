@@ -32,18 +32,19 @@ type Header struct {
 	Algorithm string `json:"alg"`
 }
 
+// Encodes a JWT object into a string, with each part Base64 URLEncoded and concatenated together with a . (i.e. "Base64Header"."Base64Payload")
 func (j *Jwt) Encode() string {
 	bHeader, err := json.Marshal(j.Header)
 	if err != nil {
 		log.Fatal(err)
 	}
-	encHeader := base64.URLEncoding.EncodeToString(bHeader)
+	encHeader := base64.RawURLEncoding.EncodeToString(bHeader)
 
 	bPayload, err := json.Marshal(j.Payload)
 	if err != nil {
 		log.Fatal(err)
 	}
-	encPayload := base64.URLEncoding.EncodeToString(bPayload)
+	encPayload := base64.RawURLEncoding.EncodeToString(bPayload)
 
 	return encHeader + "." + encPayload
 }
@@ -54,7 +55,7 @@ func (j *Jwt) Decode(s string) {
 	parts := strings.SplitN(s, ".", 2)
 
 	// Decode & unmarshal the hwt header
-	bHeader, err := base64.URLEncoding.DecodeString(parts[0])
+	bHeader, err := base64.RawURLEncoding.DecodeString(parts[0])
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -64,7 +65,7 @@ func (j *Jwt) Decode(s string) {
 	}
 
 	// Decode & unmarshal the jwt payload
-	bPayload, err := base64.URLEncoding.DecodeString(parts[1])
+	bPayload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
 		log.Fatal(err)
 	}

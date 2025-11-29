@@ -49,5 +49,5 @@ func main() {
 
 	bSignature := crypto.Sign(priv, []byte(jwt.Encode()))
 
-	fmt.Printf("JWT:\t\t%s\nEncoded:\t%s\nSignature:\t%s\n", string(bJwt), string(jwt.Encode()), base64.URLEncoding.EncodeToString(bSignature))
+	fmt.Printf("JWT:\t\t%s\nEncoded:\t%s\nSignature:\t%s\n", string(bJwt), string(jwt.Encode()), base64.RawURLEncoding.EncodeToString(bSignature))
 }
