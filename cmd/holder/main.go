@@ -1,4 +1,5 @@
-// The holder will operate in two steps:
+// The holder will operate in 3 steps:
+//  1. Load an existing key from YJT_KEYFILE, or, if it doesn't exist, generate one
 //  1. Get a nonce value from the verifier server (/nonce)
 //  2. Include the nonce as a value in the payload, and submit to the verifier (/verify)
 //
@@ -12,26 +13,40 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
 	"github.com/beardedprincess/you-jwt-this/internal/crypto"
 )
 
-const VERIFY_HOST = "127.0.0.1:8080"
-
 func main() {
+	addr := os.Getenv("YJT_ADDR")
+	if addr == "" {
+		addr = "127.0.0.1:8080"
+		log.Printf("[INFO] Using default verifier address at %s.\n\t...To override, set YJT_ADDR environment variable.\n\t   EXAMPLE: 'export YJT_ADDR=\":9090\"' will listen on TCP port 9090 on all available host IPs", addr)
+	} else {
+		log.Printf("[INFO] Verifier service listening on '%s'", addr)
+	}
+
+	keyFile := os.Getenv("YJT_KEYFILE")
+	if keyFile == "" {
+		keyFile = ".key.jwk"
+		log.Printf("[INFO] Using default keyfile %s.\n\t...To override, set YJT_KEYFILE environment variable.\n\t   EXAMPLE: 'export YJT_KEYFILE=\"~/mySecretKey.jwk\"' to use a different key file (in JWK format)", addr)
+	} else {
+		log.Printf("[INFO] Will use '%s' for key operations", keyFile)
+	}
+
 	// Generate a keypair used to sign payload
 	//. this function doesn't really care how "internal/crypto" handles this, or even what kind of key
 	//. is generated/used. This is intentional to create extensibility / improvments later
 	pub, priv, err := crypto.GenerateKey()
-	_ = priv // TODO: Remove this after testing
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// TODO:  Figure out how to get the nonce from the serveer
-	nonce, err := getNonce(fmt.Sprintf("http://%s/nonce", VERIFY_HOST))
+	nonce, err := getNonce(fmt.Sprintf("http://%s/nonce", addr))
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -72,7 +87,7 @@ func main() {
 	// The full HEADER.PAYLOAD.SIGNATURE version of the JWT token, properly encoded (use JWT.io to verify works)
 	strJwt := fmt.Sprintf("%s.%s", string(jwt.Encode()), string(sig))
 
-	resp, err := checkVerify(fmt.Sprintf("http://%s/verify", VERIFY_HOST), strJwt)
+	resp, err := checkVerify(fmt.Sprintf("http://%s/verify", addr), strJwt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,7 +99,7 @@ func main() {
 	}
 	strResp := string(bResp)
 
-	fmt.Printf("Response for Verifier: \n%v\n", strResp)
+	fmt.Printf("\n------- Response from verifier service at %s: -----------\n%v\n\n", addr, strResp)
 }
 
 func getNonce(url string) (*api.NonceResponse, error) {
