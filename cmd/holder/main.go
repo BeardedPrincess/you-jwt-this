@@ -36,7 +36,7 @@ func main() {
 	keyFile := os.Getenv("YJT_KEYFILE")
 	if keyFile == "" {
 		keyFile = DEFAULT_KEYFILE
-		log.Printf("[INFO] Using default keyfile %s.\n\t...To override, set YJT_KEYFILE environment variable.\n\t   EXAMPLE: 'export YJT_KEYFILE=\"~/myOtherKey.jwk\"' to use a different key file (in JWK format)", addr)
+		log.Printf("[INFO] Using default keyfile '%s'.\n\t...To override, set YJT_KEYFILE environment variable.\n\t   EXAMPLE: 'export YJT_KEYFILE=\"~/myOtherKey.jwk\"' to use a different key file (in JWK format)", keyFile)
 	} else {
 		log.Printf("[INFO] Will use '%s' for key operations", keyFile)
 	}
