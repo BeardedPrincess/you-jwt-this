@@ -34,10 +34,10 @@ func main() {
 			Algorithm: "EdDSA",
 		},
 		Payload: api.Payload{
-			NonceID: "Foo",
-			Nonce:   "Bar",
-			Subject: "Lorem Ipsum",
-			Jwk:     crypto.GetJWK(pub),
+			Nonce:    api.NonceResponse{ID: "id10t", Value: "Fooish"},
+			Subject:  "Lorem Ipsum",
+			Jwk:      crypto.GetJWK(pub),
+			Audience: "https://you-jwt-this.beardedprincess.com",
 		},
 	}
 

@@ -26,8 +26,7 @@ type Jwt struct {
 }
 
 type Payload struct {
-	NonceID  string        `json:"nonceId"`
-	Nonce    string        `json:"nonce"`
+	Nonce    NonceResponse `json:"nonce"`
 	Subject  string        `json:"sub"`
 	Audience string        `json:"aud"`
 	Issued   time.Time     `json:"iss"`
