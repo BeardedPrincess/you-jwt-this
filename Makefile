@@ -1,4 +1,4 @@
-PROJECT := key-attestation
+PROJECT := you-jwt-this
 VERSION := $(shell git describe --tags --exact-match 2>/dev/null || date +DEV-%Y%m%d%H%M%S)
 BINS := verifier holder
 PLATFORMS := linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64
