@@ -1,0 +1,23 @@
+// Crypto wrapper that allows later expansion of different crypto algorithms,
+// or the use of better crypto service providers (i.e. HSM, smart-card, TPM, etc.)
+package crypto
+
+import (
+	"crypto/ed25519"
+	"crypto/rand"
+)
+
+// Generates a new keypair
+func GenerateKey() (ed25519.PublicKey, ed25519.PrivateKey, error) {
+	return ed25519.GenerateKey(rand.Reader)
+}
+
+// Sign signs the message with privateKey and returns a signature.
+func Sign(priv ed25519.PrivateKey, data []byte) []byte {
+	return ed25519.Sign(priv, data)
+}
+
+// Verify reports whether sig is a valid signature of message by publicKey.
+func Verify(pub ed25519.PublicKey, data []byte, sig []byte) bool {
+	return ed25519.Verify(pub, data, sig)
+}
