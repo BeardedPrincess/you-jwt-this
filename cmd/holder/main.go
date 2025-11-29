@@ -29,19 +29,25 @@ func main() {
 	// TODO:  Figure out how to get the nonce from the serveer
 
 	// Construct the payload
-	var payload api.Payload = api.Payload{
-		NonceID:   "Foo",
-		Nonce:     "Bar",
-		Subject:   "Lorem Ipsum",
-		PublicKey: base64.StdEncoding.EncodeToString(pub),
+	var jwt api.Jwt = api.Jwt{
+		Header: api.Header{
+			Type:      "JWT",
+			Algorithm: "EdDSA",
+		},
+		Payload: api.Payload{
+			NonceID:   "Foo",
+			Nonce:     "Bar",
+			Subject:   "Lorem Ipsum",
+			PublicKey: base64.StdEncoding.EncodeToString(pub),
+		},
 	}
 
-	// Convert payload to JSON
-	bPayload, err := json.Marshal(payload)
+	bJwt, err := json.Marshal(jwt)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	fmt.Println(string(bPayload))
+	bSignature := crypto.Sign(priv, []byte(jwt.Encode()))
 
+	fmt.Printf("JWT:\t\t%s\nEncoded:\t%s\nSignature:\t%s\n", string(bJwt), string(jwt.Encode()), base64.URLEncoding.EncodeToString(bSignature))
 }
