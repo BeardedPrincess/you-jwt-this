@@ -1,12 +1,18 @@
 package verifier
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"time"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
+
+	"github.com/google/uuid"
 )
+
+const NONCE_VALIDITY = 300 // lifetime for a nonce (in seconds) before it's invalidated
 
 type nonceEntry struct {
 	Value     string
@@ -41,7 +47,21 @@ func (s *Server) registerRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) handleNonce(w http.ResponseWriter, r *http.Request) {
-	resp := api.NonceResponse{ID: "foasdfadfadsfafo", Value: "bar"}
+	// Get some random bytes to use as the nonce value
+	b := make([]byte, 32)
+	_, _ = rand.Read(b)
+	nonceVal := base64.StdEncoding.EncodeToString(b)
+
+	// Generate a GUID for the id (lookup value)
+	id := uuid.NewString()
+
+	s.nonces[id] = nonceEntry{
+		Value:     nonceVal,
+		ExpiresAt: time.Now().Add(NONCE_VALIDITY * time.Second),
+		Used:      false,
+	}
+
+	resp := api.NonceResponse{ID: id, Value: nonceVal}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
 }
