@@ -8,6 +8,7 @@
 package main
 
 import (
+	"crypto/ed25519"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -20,10 +21,13 @@ import (
 	"github.com/beardedprincess/you-jwt-this/internal/crypto"
 )
 
+const DEFAULT_ADDR = "127.0.0.1:8080"
+const DEFAULT_KEYFILE = "keyfile.jwk"
+
 func main() {
 	addr := os.Getenv("YJT_ADDR")
 	if addr == "" {
-		addr = "127.0.0.1:8080"
+		addr = DEFAULT_ADDR
 		log.Printf("[INFO] Using default verifier address at %s.\n\t...To override, set YJT_ADDR environment variable.\n\t   EXAMPLE: 'export YJT_ADDR=\":9090\"' will listen on TCP port 9090 on all available host IPs", addr)
 	} else {
 		log.Printf("[INFO] Verifier service listening on '%s'", addr)
@@ -31,18 +35,34 @@ func main() {
 
 	keyFile := os.Getenv("YJT_KEYFILE")
 	if keyFile == "" {
-		keyFile = ".key.jwk"
-		log.Printf("[INFO] Using default keyfile %s.\n\t...To override, set YJT_KEYFILE environment variable.\n\t   EXAMPLE: 'export YJT_KEYFILE=\"~/mySecretKey.jwk\"' to use a different key file (in JWK format)", addr)
+		keyFile = DEFAULT_KEYFILE
+		log.Printf("[INFO] Using default keyfile %s.\n\t...To override, set YJT_KEYFILE environment variable.\n\t   EXAMPLE: 'export YJT_KEYFILE=\"~/myOtherKey.jwk\"' to use a different key file (in JWK format)", addr)
 	} else {
 		log.Printf("[INFO] Will use '%s' for key operations", keyFile)
 	}
 
-	// Generate a keypair used to sign payload
-	//. this function doesn't really care how "internal/crypto" handles this, or even what kind of key
-	//. is generated/used. This is intentional to create extensibility / improvments later
-	pub, priv, err := crypto.GenerateKey()
-	if err != nil {
-		log.Fatal(err)
+	var pub ed25519.PublicKey
+	var priv ed25519.PrivateKey // Using any since we don't know exactly what kind of key crypto will give us
+	if _, err := os.Stat(keyFile); err == nil {
+		log.Printf("[INFO] Loading key from existing file: '%s'", keyFile)
+		pub, priv, err = crypto.LoadFromFile(keyFile)
+		if err != nil {
+			log.Fatalf("[FATAL] %v", err)
+		}
+	}
+
+	if pub == nil || priv == nil {
+		// Generate a keypair used to sign payload
+		//. this function doesn't really care how "internal/crypto" handles this, or even what kind of key
+		//. is generated/used. This is intentional to create extensibility / improvments later
+
+		log.Printf("[INFO] Generating new key. It will be saved in %s", keyFile)
+		var err error
+		pub, priv, err = crypto.GenerateKey()
+		if err != nil {
+			log.Fatal(err)
+		}
+		crypto.SaveToFile(keyFile, pub, priv)
 	}
 
 	// TODO:  Figure out how to get the nonce from the serveer

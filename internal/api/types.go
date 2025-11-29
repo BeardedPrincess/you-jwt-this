@@ -31,7 +31,7 @@ type Payload struct {
 	Subject   string        `json:"sub"`
 	Audience  string        `json:"aud"`
 	Issued    time.Time     `json:"iss"`
-	PublicKey crypto.PubJWK `json:"jwk"`
+	PublicKey crypto.JWK    `json:"jwk"`
 }
 
 type Header struct {

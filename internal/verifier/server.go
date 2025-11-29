@@ -136,7 +136,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := api.AttestResponse{OK: true, Message: jwt.ToString()}
+	resp := api.AttestResponse{OK: true, Message: "Validated signature & nonce: Private Key Holder Verified"}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
 }
