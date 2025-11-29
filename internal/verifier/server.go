@@ -75,7 +75,9 @@ func (s *Server) handleNonce(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 	// Read the JWT payload from the body
 	body, err := io.ReadAll(r.Body)
-	fmt.Println("Got: " + string(body))
+
+	log.Printf("[INFO] Request Received:\n--------------- Request ---------------\n%s\n---------------------------------------\n", string(body))
+
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Bad Request, malformed or empty POST body: %v", err)}
@@ -105,12 +107,16 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("Decoded JWT successfully")
+
 	// We at least have a syntax correct JWT token
 	//  Check the signature to ensure it hasn't been tampered with
 	valid, err := crypto.Verify(jwt.Payload.PublicKey, []byte(encJwt), sig)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("fatal error validating signature: %v", err)}
+		strErr := fmt.Sprintf("error validating signature: %v", err)
+		log.Printf("[FATAL] %s", strErr)
+		w.WriteHeader(http.StatusInternalServerError)
+		resp := api.AttestResponse{OK: false, Message: strErr}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
 		return
@@ -118,25 +124,33 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 
 	// We didn't get an error, but the signature is invalid!
 	if !valid {
-		w.WriteHeader(http.StatusBadRequest)
-		resp := api.AttestResponse{OK: false, Message: "Signature invalid. JWT rejected"}
+		strErr := "signature invalid"
+		log.Printf("[WARN] %s", strErr)
+		w.WriteHeader(http.StatusForbidden)
+		resp := api.AttestResponse{OK: false, Message: strErr}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
+
+	log.Printf("[INFO] JWT Signature is valid")
 
 	// Lookup the nonce supplied in the JWT, and compare it to the list of nonce's stored
 	//. if they do not match, this should not be trusted
 	err = s.validateNonce(jwt.Payload.Nonce.ID, jwt.Payload.Nonce.Value)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		resp := api.AttestResponse{OK: false, Message: err.Error()}
+		strErr := fmt.Sprintf("error validating signature: %s", err.Error())
+		log.Printf("[ERROR] %s", strErr)
+		w.WriteHeader(http.StatusUnauthorized)
+		resp := api.AttestResponse{OK: false, Message: strErr}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
 		return
 	}
 
-	resp := api.AttestResponse{OK: true, Message: "Validated signature & nonce: Private Key Holder Verified"}
+	log.Printf("[INFO] Nonce is valid")
+
+	resp := api.AttestResponse{OK: true, Message: "Valid signature and nonce: Private Key Holder Verified"}
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(resp)
 }
