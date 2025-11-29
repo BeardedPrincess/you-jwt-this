@@ -19,7 +19,7 @@ build:
 	done
 
 archive: build
-	tar czf $(PROJECT)-$(VERSION).tar.gz README.md dist
+	tar czf ../$(PROJECT)-$(VERSION).tar.gz README.md dist
 
 clean:
 	rm -rf dist *.tar.gz
