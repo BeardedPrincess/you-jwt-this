@@ -36,6 +36,19 @@ func main() {
 		log.Fatal(err)
 	}
 
+	// Testing invalid nonce
+	// _ = nonce
+	// nonce = &api.NonceResponse{ID: "afad", Value: "invalid"}
+
+	// Testing expired nonce
+	// time.Sleep((verifier.NONCE_VALIDITY + 2) * time.Second)
+
+	// Testing already used nonce
+	// nonce.ID = "ad685d8b-1b3a-48de-870a-476117c373cc"
+
+	// Testing invalid value nonce
+	// nonce.Value = "klfddklsad;klsadjklf;jlskdf;lkasdf;kl"
+
 	// Construct the payload
 	var jwt api.Jwt = api.Jwt{
 		Header: api.Header{
@@ -43,10 +56,10 @@ func main() {
 			Algorithm: "EdDSA",
 		},
 		Payload: api.Payload{
-			Nonce:    *nonce,
-			Subject:  "Lorem Ipsum",
-			Jwk:      crypto.GetJWK(pub),
-			Audience: "https://you-jwt-this.beardedprincess.com",
+			Nonce:     *nonce,
+			Subject:   "Lorem Ipsum",
+			PublicKey: crypto.GetJWK(pub),
+			Audience:  "https://you-jwt-this.beardedprincess.com",
 		},
 	}
 

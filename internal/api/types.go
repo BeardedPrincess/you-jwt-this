@@ -27,11 +27,11 @@ type Jwt struct {
 }
 
 type Payload struct {
-	Nonce    NonceResponse `json:"nonce"`
-	Subject  string        `json:"sub"`
-	Audience string        `json:"aud"`
-	Issued   time.Time     `json:"iss"`
-	Jwk      crypto.PubJWK `json:"jwk"`
+	Nonce     NonceResponse `json:"nonce"`
+	Subject   string        `json:"sub"`
+	Audience  string        `json:"aud"`
+	Issued    time.Time     `json:"iss"`
+	PublicKey crypto.PubJWK `json:"jwk"`
 }
 
 type Header struct {

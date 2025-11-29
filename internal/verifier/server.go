@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const NONCE_VALIDITY = 300 // lifetime for a nonce (in seconds) before it's invalidated
+const NONCE_VALIDITY = 5 // lifetime for a nonce (in seconds) before it's invalidated
 
 type nonceEntry struct {
 	Value     string
@@ -107,7 +107,7 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 
 	// We at least have a syntax correct JWT token
 	//  Check the signature to ensure it hasn't been tampered with
-	valid, err := crypto.Verify(jwt.Payload.Jwk, []byte(encJwt), sig)
+	valid, err := crypto.Verify(jwt.Payload.PublicKey, []byte(encJwt), sig)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("fatal error validating signature: %v", err)}
