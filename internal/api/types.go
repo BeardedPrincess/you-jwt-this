@@ -15,6 +15,11 @@ type NonceResponse struct {
 	Value string `json:"value"`
 }
 
+type AttestResponse struct {
+	OK      bool   `json:"ok"`
+	Message string `json:"message"`
+}
+
 type Jwt struct {
 	Header  Header
 	Payload Payload
