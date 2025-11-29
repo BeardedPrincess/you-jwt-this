@@ -19,17 +19,25 @@ type Jwt struct {
 }
 
 type Payload struct {
-	NonceID   string    `json:"nonceId"`
-	Nonce     string    `json:"nonce"`
-	Subject   string    `json:"sub"`
-	Audience  string    `json:"aud"`
-	Issued    time.Time `'json:"iss"`
-	PublicKey string    `'json:"jwk"`
+	NonceID  string    `json:"nonceId"`
+	Nonce    string    `json:"nonce"`
+	Subject  string    `json:"sub"`
+	Audience string    `json:"aud"`
+	Issued   time.Time `json:"iss"`
+	Jwk      JWK       `json:"jwk"`
 }
 
 type Header struct {
 	Type      string `json:"typ"`
 	Algorithm string `json:"alg"`
+}
+
+// JWK represents the structure of an Octet Key Pair (OKP) JWK for Ed25519.
+type JWK struct {
+	Kty string `json:"kty"`         // Key Type
+	Crv string `json:"crv"`         // Curve
+	X   string `json:"x"`           // Public key (base64url encoded)
+	D   string `json:"d,omitempty"` // Private key (base64url encoded, omit if public only)
 }
 
 // Encodes a JWT object into a string, with each part Base64 URLEncoded and concatenated together with a . (i.e. "Base64Header"."Base64Payload")

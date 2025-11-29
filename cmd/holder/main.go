@@ -8,7 +8,6 @@ package main
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 
@@ -35,19 +34,25 @@ func main() {
 			Algorithm: "EdDSA",
 		},
 		Payload: api.Payload{
-			NonceID:   "Foo",
-			Nonce:     "Bar",
-			Subject:   "Lorem Ipsum",
-			PublicKey: base64.StdEncoding.EncodeToString(pub),
+			NonceID: "Foo",
+			Nonce:   "Bar",
+			Subject: "Lorem Ipsum",
+			Jwk: api.JWK{
+				Kty: "OKP",
+				Crv: "Ed25519",
+				X:   base64.RawURLEncoding.EncodeToString(pub),
+			},
 		},
 	}
 
-	bJwt, err := json.Marshal(jwt)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// bJwt, err := json.Marshal(jwt)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 
-	bSignature := crypto.Sign(priv, []byte(jwt.Encode()))
+	sig := base64.RawURLEncoding.EncodeToString(crypto.Sign(priv, []byte(jwt.Encode())))
 
-	fmt.Printf("JWT:\t\t%s\nEncoded:\t%s\nSignature:\t%s\n", string(bJwt), string(jwt.Encode()), base64.RawURLEncoding.EncodeToString(bSignature))
+	fmt.Printf("\n---------- BEGIN JWT ---------\n%s.%s\n---------- END JWT ---------\n", string(jwt.Encode()), string(sig))
+
+	// fmt.Printf("JWT:\t\t%s\nEncoded:\t%s\nSignature:\t%s\n", string(bJwt), string(jwt.Encode()), base64.RawURLEncoding.EncodeToString(bSignature))
 }
