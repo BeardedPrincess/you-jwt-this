@@ -53,7 +53,7 @@ func main() {
 	// Get the URL Encoded JWT
 	encJwt := jwt.Encode()
 
-	// Calculate the signature for the JWT
+	// Calculate the signature for the JWT && encode to Base64
 	sig := base64.RawURLEncoding.EncodeToString(crypto.Sign(priv, []byte(encJwt)))
 
 	// The full HEADER.PAYLOAD.SIGNATURE version of the JWT token, properly encoded (use JWT.io to verify works)

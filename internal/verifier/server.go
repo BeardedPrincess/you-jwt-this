@@ -6,11 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/beardedprincess/you-jwt-this/internal/api"
+	"github.com/beardedprincess/you-jwt-this/internal/crypto"
 
 	"github.com/google/uuid"
 )
@@ -84,11 +86,14 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 	parts := strings.SplitN(string(body), ".", 3)
 	encJwt := parts[0] + "." + parts[1]
 	encSig := parts[2]
-	_ = encSig
 
-	// TODO: Validate the JWT using the signature
+	// Decode the signature from Base64
+	sig, err := base64.RawURLEncoding.DecodeString(encSig)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	// Decode the JWT, and return it in JSON response (body)
+	// Decode the JWT
 	jwt := api.Jwt{}
 	err = jwt.Decode(string(encJwt))
 	if err != nil {
@@ -96,7 +101,30 @@ func (s *Server) handleVerify(w http.ResponseWriter, r *http.Request) {
 		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("Unable to Base64 Decode JWT Token: %v", err)}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(resp)
+		return
 	}
+
+	// We at least have a syntax correct JWT token
+	//  Check the signature to ensure it hasn't been tampered with
+	valid, err := crypto.Verify(jwt.Payload.Jwk, []byte(encJwt), sig)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		resp := api.AttestResponse{OK: false, Message: fmt.Sprintf("fatal error validating signature: %v", err)}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	// We didn't get an error, but the signature is invalid!
+	if !valid {
+		w.WriteHeader(http.StatusBadRequest)
+		resp := api.AttestResponse{OK: false, Message: "Signature invalid. JWT rejected"}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+		return
+	}
+
+	// TODO:  Validate nonce
 
 	resp := api.AttestResponse{OK: true, Message: jwt.ToString()}
 	w.Header().Set("Content-Type", "application/json")

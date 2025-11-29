@@ -35,6 +35,10 @@ func Sign(priv ed25519.PrivateKey, data []byte) []byte {
 }
 
 // Verify reports whether sig is a valid signature of message by publicKey.
-func Verify(pub ed25519.PublicKey, data []byte, sig []byte) bool {
-	return ed25519.Verify(pub, data, sig)
+func Verify(pubJwk PubJWK, data []byte, sig []byte) (bool, error) {
+	pub, err := base64.RawURLEncoding.DecodeString(pubJwk.X)
+	if err != nil {
+		return false, err
+	}
+	return ed25519.Verify(pub, data, sig), nil
 }
