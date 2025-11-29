@@ -28,7 +28,7 @@ func main() {
 	addr := os.Getenv("YJT_ADDR")
 	if addr == "" {
 		addr = DEFAULT_ADDR
-		log.Printf("[INFO] Using default verifier address at %s.\n\t...To override, set YJT_ADDR environment variable.\n\t   EXAMPLE: 'export YJT_ADDR=\":9090\"' will listen on TCP port 9090 on all available host IPs", addr)
+		log.Printf("[INFO] Using default verifier address at %s.\n\t...To override, set YJT_ADDR environment variable.\n\t   EXAMPLE: 'export YJT_ADDR=\"127.0.0.1:9090\"' will connect to verifier on TCP port 9090 at 127.0.0.1", addr)
 	} else {
 		log.Printf("[INFO] Verifier service listening on '%s'", addr)
 	}
